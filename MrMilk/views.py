@@ -3,13 +3,23 @@ from distutils.log import Log
 from django.db.models import Count
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from .permissions import  UpdateOwnProfile
 from rest_framework import viewsets, status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Product, Category, Brand, Order, Profile, OrderDetail
-from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, OrderDetailSerializer
+from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, OrderDetailSerializer, ProfileSerializer
+
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (UpdateOwnProfile,)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -18,6 +28,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get(self, request):
         products = Product.objects.all()
@@ -88,6 +100,64 @@ class OrderViewSet(viewsets.ModelViewSet):
 class OrderDetailViewSet(viewsets.ModelViewSet):
     queryset = OrderDetail.objects.all()
     serializer_class = OrderDetailSerializer
+
+    def list(self, request, *args, **kwargs):
+        response = {'message': 'you can not access full list'}
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        try:
+            order = Order.objects.get(order_id=pk)
+            order_detail = OrderDetail.objects.filter(order_id=pk)
+            serializer = self.serializer_class(order_detail, many=True)
+            # product_list = Product.objects.filter(serializer.data['product'])
+            response = {'message': 'order_id wise order_detail', 'data': serializer.data}
+            return Response(response, status=status.HTTP_200_OK)
+        except:
+            response = {'message': 'order_id does not exist in order_detail'}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, len(request.data), type(request.data))
+        serializer_order = OrderSerializer(data=request.data['order'])
+        if serializer_order.is_valid():
+            serializer_order.save()
+            print(serializer_order.data)
+            order_detail = request.data['order_detail']
+            try:
+                for data_item in order_detail:
+                    d = dict(data_item)
+                    d['order'] = serializer_order.data['order_id']
+                    print(d['order'])
+                    print(d['product'])
+                    print(d['quantity'])
+                    serializer_order_detail = self.get_serializer(data=d)
+                    if serializer_order_detail.is_valid():
+                        serializer_order_detail.save()
+                    else:
+                        print("not a valid serializer for order detail")
+                        response = {'message': 'order already contains this product cannot change the it'}
+                        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                data = OrderDetail.objects.filter(order_id=serializer_order.data['order_id'])
+                serializer = self.serializer_class(data, many=True)
+                response = {"message": "order detail inserted for", "order_data": serializer.data,
+                            "order": serializer_order.data}
+                return Response(response, status=status.HTTP_201_CREATED)
+            except:
+                response = {'message': 'order already contains this product cannot change the it'}
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            print("not a valid serializer for order")
+            response = {'message': 'order already contains this product cannot change the it'}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderDetailViewSet(viewsets.ModelViewSet):
+    queryset = OrderDetail.objects.all()
+    serializer_class = OrderDetailSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def list(self, request, *args, **kwargs):
         response = {'message': 'you can not access full list'}

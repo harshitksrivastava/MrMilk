@@ -3,6 +3,19 @@ from MrMilk import models
 from MrMilk.models import Order, OrderDetail
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Profile
+        fields = ('id', 'phone', 'name', 'password', 'address', 'is_staff', 'is_active', 'is_superuser')
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'style': {
+                    'input_type': 'password'},
+                'required': True}
+        }
+
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product

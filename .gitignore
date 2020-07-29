@@ -97,6 +97,7 @@ celerybeat-schedule
 .venv
 env/
 venv/
+dairyStop/
 ENV/
 env.bak/
 venv.bak/
