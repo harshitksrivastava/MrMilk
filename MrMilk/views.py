@@ -21,6 +21,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (UpdateOwnProfile,)
 
+    # PATCH request is directed to this method for User Profile comes with detail=True
+    def partial_update(self, request, *args, **kwargs):
+        response={"message": "this is partial update for the User profile"}
+        return Response(response, status=status.HTTP_200_OK)
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
@@ -57,6 +62,8 @@ class CategoryList(APIView):
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get(self):
         brand_list = self.get_queryset()
@@ -67,6 +74,8 @@ class BrandViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get(self, pk=None):
         order = get_object_or_404(self.queryset, pk)
@@ -101,9 +110,9 @@ class OrderDetailViewSet(viewsets.ModelViewSet):
     queryset = OrderDetail.objects.all()
     serializer_class = OrderDetailSerializer
 
-    def list(self, request, *args, **kwargs):
-        response = {'message': 'you can not access full list'}
-        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+    # def list(self, request, *args, **kwargs):
+    #     response = {'message': 'you can not access full list'}
+    #     return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
         try:
@@ -157,7 +166,7 @@ class OrderDetailViewSet(viewsets.ModelViewSet):
     queryset = OrderDetail.objects.all()
     serializer_class = OrderDetailSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdminUser)
 
     def list(self, request, *args, **kwargs):
         response = {'message': 'you can not access full list'}

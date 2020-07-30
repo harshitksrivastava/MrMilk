@@ -11,7 +11,7 @@ router.register(r'products', ProductViewSet)
 router.register(r'brands', BrandViewSet)
 router.register(r'order', OrderViewSet)
 router.register(r'order-detail', OrderDetailViewSet)
-router.register(r'user-profile', UserProfileViewSet)
+router.register(r'users', UserProfileViewSet)
 
 app_name = 'Mr_Milk'
 urlpatterns = [

@@ -45,7 +45,7 @@ class OrderDetail(models.Model):
 
 class ProfileManager(BaseUserManager):
 
-    def create_user(self, phone, name, email, password, address, is_staff=False, is_active=True, is_superuser=False):
+    def create_user(self, phone, name, email, password, address=None, is_staff=False, is_active=True, is_superuser=False):
         if not phone or not email or not name:
             raise ValueError('Mandatory fields can not be null')
         normal_email = self.normalize_email(email)
@@ -58,8 +58,12 @@ class ProfileManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, phone, name, email, password, address):
-        user = self.create_user(phone=phone, name=name, email=email, password=password, address=address,
+    def create_superuser(self, **kwargs):
+        user = self.create_user(phone=kwargs['phone'],
+                                name=kwargs['name'],
+                                email=kwargs['email'],
+                                password=kwargs['password'],
+                                address=kwargs.get('address', ""),
                                 is_superuser=True,
                                 is_staff=True)
         return user

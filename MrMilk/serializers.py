@@ -4,9 +4,10 @@ from MrMilk.models import Order, OrderDetail
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = models.Profile
-        fields = ('id', 'phone', 'name', 'password', 'address', 'is_staff', 'is_active', 'is_superuser')
+        fields = ('id', 'phone', 'name', 'password', 'email', 'address', 'is_staff', 'is_active', 'is_superuser')
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -14,6 +15,16 @@ class ProfileSerializer(serializers.ModelSerializer):
                     'input_type': 'password'},
                 'required': True}
         }
+
+    def create(self, validated_data):
+        user = models.Profile.objects.create_user(
+            phone=validated_data['phone'],
+            name=validated_data['name'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            address=validated_data.get('address', "")
+        )
+        return user
 
 
 class ProductSerializer(serializers.ModelSerializer):
