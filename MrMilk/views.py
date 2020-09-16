@@ -3,7 +3,7 @@ from distutils.log import Log
 from django.db.models import Count
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-from .permissions import  UpdateOwnProfile
+from .permissions import UpdateOwnProfile
 from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
@@ -12,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Product, Category, Brand, Order, Profile, OrderDetail
-from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, OrderDetailSerializer, ProfileSerializer
+from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, OrderDetailSerializer, \
+    ProfileSerializer
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -23,7 +24,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     # PATCH request is directed to this method for User Profile comes with detail=True
     def partial_update(self, request, *args, **kwargs):
-        response={"message": "this is partial update for the User profile"}
+        response = {"message": "this is partial update for the User profile"}
         return Response(response, status=status.HTTP_200_OK)
 
 
