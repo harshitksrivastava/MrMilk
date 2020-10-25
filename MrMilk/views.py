@@ -1,31 +1,66 @@
-from distutils.log import Log
-
-from django.db.models import Count
-from django.shortcuts import render
+from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
-from .permissions import UpdateOwnProfile
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Product, Category, Brand, Order, Profile, OrderDetail
-from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, OrderDetailSerializer, \
-    ProfileSerializer
+from .permissions import UpdateOwnProfile
+from .serializers import ProductSerializer, CategorySerializer, BrandSerializer, OrderSerializer, \
+    OrderDetailSerializer, ProfileSerializer, LoginSerializer
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (UpdateOwnProfile,)
+    permission_classes = (UpdateOwnProfile, )
 
     # PATCH request is directed to this method for User Profile comes with detail=True
     def partial_update(self, request, *args, **kwargs):
         response = {"message": "this is partial update for the User profile"}
         return Response(response, status=status.HTTP_200_OK)
+
+    # PUT request is directed to this method for User Profile comes with detail=True
+    def update(self, request, *args, **kwargs):
+        response = {"message": "this is update for the User profile"}
+        return Response(response, status=status.HTTP_200_OK)
+
+    # DESTROY request is directed to this method for User Profile comes with detail=True
+    def destroy(self, request, *args, **kwargs):
+        response = {"message": "this is destroy for the User profile"}
+        return Response(response, status=status.HTTP_200_OK)
+
+
+# To Login a User with valid credentials and return Token along with successful message
+class LoginAPIView(APIView):
+    permission_classes = (UpdateOwnProfile, AllowAny)
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user = authenticate(phone=serializer.data.get('phone'),
+                                password=serializer.data.get('password'))
+            if user is not None:
+                return Response({"message": "Login Successful", "data": {
+                    "token": Token.objects.get_or_create(user=user)[0].key}},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"message": "Phone or Password Incorrect", "data":
+                        serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+
+# To register a user
+class UserProfileCreateView(generics.CreateAPIView):
+    permission_classes = (AllowAny,)
+    model = Profile
+    serializer_class = ProfileSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -53,6 +88,7 @@ class CategoryList(APIView):
     """
     List all the categories
     """
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get(self, request):
         categories = Category.objects.all()
@@ -66,10 +102,10 @@ class BrandViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    def get(self):
-        brand_list = self.get_queryset()
-        serializer = self.serializer_class(brand_list, many=True)
-        return Response(serializer.data)
+    # def get(self):
+    #     brand_list = self.get_queryset()
+    #     serializer = self.serializer_class(brand_list, many=True)
+    #     return Response(serializer.data)
 
 
 class OrderViewSet(viewsets.ModelViewSet):

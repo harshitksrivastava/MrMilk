@@ -1,10 +1,11 @@
 from rest_framework import serializers, fields
+from rest_framework.authtoken.models import Token
+
 from MrMilk import models
 from MrMilk.models import Order, OrderDetail
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.Profile
         fields = ('id', 'phone', 'name', 'password', 'email', 'address', 'is_staff', 'is_active', 'is_superuser')
@@ -24,7 +25,17 @@ class ProfileSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             address=validated_data.get('address', "")
         )
+        Token.objects.create(user=user)
         return user
+
+
+class LoginSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(required=True, min_length=10)
+    password = serializers.CharField(required=True, max_length=32)
+
+    class Meta:
+        model = models.Profile
+        fields = ('phone', 'password',)
 
 
 class ProductSerializer(serializers.ModelSerializer):
